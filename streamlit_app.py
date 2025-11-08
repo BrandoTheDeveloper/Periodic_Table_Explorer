@@ -17,14 +17,14 @@ st.set_page_config(
 
 def search_by_name(name):
     for element in elements:
-        if element.name.lower() == name.lower():
+        if element["name"].lower() == name.lower():
             return element
     return "Element not found."
 
 
 def search_by_atomic_number(number):
     for element in elements:
-        if element.atomic_number == number:
+        if element["atomic_number"] == number:
             return element
     return "Element not found."
 
