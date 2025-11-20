@@ -7,7 +7,11 @@ from pathlib import Path
 # Load elements JSON relative to this script for robustness
 data_path = Path(__file__).parent / "PeriodicTableJSON.json"
 with open(data_path, "r") as file:
-    elements = json.load(file)
+    data = json.load(file)
+
+# Your JSON has the structure {"elements": [...]}
+elements = data["elements"]
+
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
