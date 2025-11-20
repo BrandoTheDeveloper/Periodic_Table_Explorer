@@ -47,6 +47,31 @@ def search_by_particle_count(particle_type, count):
     return [el for el in elements if el[particle_type] == count]
 
 
+def render_element_card(element):
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            ">
+            <h3 style="margin-top: 0; font-weight: bold;">{element.get("name", "Unknown")}</h3>
+
+            <p><strong>Atomic Number:</strong> {element.get("atomic_number", "N/A")}</p>
+            <p><strong>Element Symbol:</strong> {element.get("symbol", "N/A")}</p>
+            <p><strong>State:</strong> {element.get("type", "N/A")}</p>
+            <p><strong># of Protons:</strong> {element.get("protons", "N/A")}</p>
+            <p><strong># of Electrons:</strong> {element.get("electrons", "N/A")}</p>
+
+            <p><strong>Description:</strong><br>{element.get("summary", "No description available.")}</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
 st.title("Welcome to the Periodic Table Explorer!")
 
 # Small welcome input
@@ -100,9 +125,9 @@ if result is not None:
         if len(result) == 0:
             st.info("No elements found.")
         else:
-            # Show as dataframe for readability
-            st.write(pd.DataFrame(result))
+            for el in result:
+                render_element_card(el)
     elif isinstance(result, dict):
-        st.json(result)
+        render_element_card(result)
     else:
         st.write(result)
