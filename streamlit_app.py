@@ -48,7 +48,7 @@ def search_by_particle_count(particle_type, count):
 
 
 def render_element_card(element):
-    st.markdown(
+    st.html(
         f"""
         <div style="
             background-color:#f8f9fa;
