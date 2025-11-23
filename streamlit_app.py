@@ -25,51 +25,57 @@ st.set_page_config(
 
 def search_by_name(name):
     for element in elements:
-        if element["name"].lower() == name.lower():
+        if element["name"].lower() == name.lower() or element["symbol"].lower() == name.lower():
             return element
     return "Element not found."
 
 
 def search_by_atomic_number(number):
     for element in elements:
-        if element["atomic_number"] == number:
+        if "number" in element and element.get("number") == number:
             return element
-    return "Element not found."
+    return "Element not found. Please try again."
 
 
 def search_by_state(state):
-    return [el for el in elements if el["type"].lower() == state.lower()]
+    return [el for el in elements if el["phase"].lower() == state.lower()]
 
 
 def search_by_particle_count(particle_type, count):
-    if particle_type not in ["electrons", "protons"]:
+    # Ensure the particle type is valid
+    if particle_type not in ["protons", "electrons"]:
         return "Invalid particle type."
-    return [el for el in elements if el[particle_type] == count]
+
+    # Since in your JSON, protons and electrons = atomic number
+    matches = [el for el in elements if "number" in el and el["number"] == count]
+
+    if not matches:
+        return "No elements found."
+    return matches
 
 
-def render_element_card(element):
-    st.html(
-        f"""
-        <div style="
-            background-color:#f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            ">
-            <h3 style="margin-top: 0; font-weight: bold;">{element.get("name", "Unknown")}</h3>
+def show_markdown(el):
+    st.markdown(f"""
+                
 
-            <p><strong>Atomic Number:</strong> {element.get("atomic_number", "N/A")}</p>
-            <p><strong>Element Symbol:</strong> {element.get("symbol", "N/A")}</p>
-            <p><strong>State:</strong> {element.get("type", "N/A")}</p>
-            <p><strong># of Protons:</strong> {element.get("protons", "N/A")}</p>
-            <p><strong># of Electrons:</strong> {element.get("electrons", "N/A")}</p>
 
-            <p><strong>Description:</strong><br>{element.get("summary", "No description available.")}</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+**Element Name:** {el.get("name")}  
+
+**Symbol:** {el.get("symbol")}  
+
+**Atomic Number:** {el.get("number")}  
+
+**State:** {el.get("phase")}  
+
+**Protons:** {el.get("number")}  
+
+**Electrons:** {el.get("number")}
+
+**Appearance:** {el.get("appearance")}  
+
+**Description:**  
+{el.get("summary")}
+""")
 
 
 st.title("Welcome to the Periodic Table Explorer!")
@@ -92,10 +98,12 @@ result = None
 if option == "By Name":
     name = st.text_input("Element name", key="name_input")
     if st.button("Search by name", key="search_name"):
-        if not name or not name.strip():
-            st.warning("Please enter an element name.")
+        if not name.isalpha():
+            st.warning(
+                "Please enter only letters for the element name or symbol.")
         else:
             result = search_by_name(name.strip())
+
 
 if option == "By Atomic Number":
     # Use a numeric input for atomic number to ensure correct type
@@ -104,30 +112,42 @@ if option == "By Atomic Number":
     if st.button("Search by atomic number", key="search_atomic"):
         result = search_by_atomic_number(int(number))
 
+
 if option == "By State":
-    # Build a sorted list of available states/types
-    types = sorted({el.get("type", "Unknown") for el in elements})
-    state = st.selectbox("State / Type", options=types, key="state_input")
+    # Build a sorted list of unique phases from your JSON
+    phases = sorted({el.get("phase", "Unknown") for el in elements})
+
+    state = st.selectbox("State / Phase", options=phases, key="state_input")
+
     if st.button("Search by state", key="search_state"):
         result = search_by_state(state)
 
-if option == "By Particle Count":
-    particle_type = st.selectbox(
-        "Particle type", ["electrons", "protons"], key="particle_type")
-    count = st.number_input("Count", min_value=0, value=1,
-                            step=1, key="particle_count")
-    if st.button("Search by particle count", key="search_particle"):
-        result = search_by_particle_count(particle_type, int(count))
 
-# Present results consistently
+if option == "By Particle Count":
+    particle_type = st.radio("Choose a particle type", [
+        "Protons",
+        "Electrons",
+    ])
+    particle_count = st.number_input(f"{particle_type} Number", min_value=1,
+                                     max_value=118, value=1, step=1, key="particle_input")
+
+    if st.button("Search by particle count", key="search_particle"):
+        result = search_by_particle_count(
+            particle_type.lower(), int(particle_count))
+
+    # Present results consistently
+
+
 if result is not None:
-    if isinstance(result, list):
+    if isinstance(result, dict):
+        show_markdown(result)
+
+    elif isinstance(result, list):
         if len(result) == 0:
             st.info("No elements found.")
         else:
             for el in result:
-                render_element_card(el)
-    elif isinstance(result, dict):
-        render_element_card(result)
+                show_markdown(el)
+
     else:
         st.write(result)
